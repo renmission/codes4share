@@ -1,0 +1,39 @@
+
+<div class="container">
+    <div class="row">
+         <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
+
+
+             {{#each errorsMessage}}
+
+                <div class="alert alert-danger">
+                    {{this.msg}}
+                </div>
+
+            {{/each}}
+
+
+            <h2 class=" text-center display-3">Contact Us</h2>
+
+            <form class="form-signin" action="/contact" method="post">
+
+                <div class="form-group">
+                    <label for="inputName">Name:</label>
+                    <input type="text" id="inputName" name="name" class="form-control" placeholder="Enter Name" value="{{name}}">
+                    
+                </div>
+                <div class="form-group">
+                    <label for="inputEmail">Email:</label>
+                    <input type="email" id="inputEmail" name="email" class="form-control" placeholder="Enter Email" value="{{email}}">
+                </div>
+                
+                <div class="form-group">
+                     <label for="inputMessage">Message:</label>
+                    <textarea name="message" class="form-control" id="inputMessage" cols="10" rows="5" >{{message}}</textarea>
+                </div>
+                <input type="submit" value="Send Message" class="form-control btn btn-primary btn-lg">
+            </form>
+
+        </div>
+    </div>
+</div>

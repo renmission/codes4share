@@ -1,0 +1,43 @@
+.rounded {
+    border-radius: 20px !important;
+}
+
+.CodeMirror {
+    height: 700px;
+}
+
+*,
+*:before,
+*:after {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+#lVideo {
+    margin-top: 15px;
+    width: 280px;
+    height: auto;
+    background: #eee;
+}
+
+#rVideo {
+    width: 100%;
+    height: 75%;
+    max-height: 480px;
+    background: #eee;
+}
+
+#video-container {
+    text-align: center;
+}
+
+#step1-error,
+#step2,
+#step3 {
+    display: none;
+}
+
+#my-id {
+    font-weight: bold;
+}

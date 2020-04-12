@@ -1,0 +1,46 @@
+
+<div class="container mt-5 pt-5">
+    <div class="row">
+         <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
+
+             {{#each errorsMessage}}
+
+                <div class="alert alert-danger">
+                    {{this.msg}}
+                </div>
+
+             {{/each}}
+
+
+            <h2 class=" text-center display-4">Sign Up</h2>
+            
+
+            <form class="form-signin" method="post">
+
+                <div class="form-group">
+                    <input type="text" id="inputName" name="name" class="form-control" placeholder="Enter Name" value="{{name}}">
+                </div>
+                <div class="form-group">
+                    <input type="email" id="inputEmail" name="email" class="form-control" placeholder="Enter Email" value="{{email}}">
+                </div>
+                
+                <div class="form-group">
+                    <input type="password" id="InputPassword" name="password" class="form-control" placeholder="Enter Password" >
+                </div>
+
+                 <div class="form-group">
+                    <input type="password" id="InputPassword" name="confirmPassword" class="form-control" placeholder="Enter Confirm Password" >
+                </div>
+
+                <input type="submit" value="Signup" class="form-control btn btn-primary btn-lg">
+
+                {{!-- <div class="mt-3 mb-3 text-center">
+                    or
+                </div>
+
+                <a href="/auth/facebook" class="form-control btn btn-success btn-lg">Sign In with facebook </a> --}}
+                </form>
+
+        </div>
+    </div>
+</div>

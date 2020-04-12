@@ -1,0 +1,313 @@
+
+      <div class="container mt-5 pt-5">
+          <div class="row">
+              
+        <div class="col-md-8 ">
+            <h2>let's <span>Make it Easy</span> </h2>
+            <textarea id="editor">{{content}}</textarea>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+
+                {{!-- Video Call --}}
+                <div id="video-container">
+                    <video id="rVideo" autoplay="autplay" ></video>
+                    <video id="lVideo" autoplay="autplay" muted></video>
+
+                    <div id="step2">
+                        <p>Your ID: <span id="displayId"></span></p>
+                        <div class="form-inline">
+
+                            <input type="text" class="form-control" placeholder="Enter a connection id..." id="connId">
+
+                            <button type="submit" class="btn btn-sm btn-success" id="conn_button" >Connect</button>
+                            <button type="submit" class="btn btn-sm btn-danger" id="call_button">Call</button>
+                        </div>
+                    </div>
+                    
+                    <div id="step3">
+                        <p>Talk to: <span id="second-id">...</span></p>
+                        <a href="#" class="btn btn-sm btn-danger" id="end-call">End Call</a>
+                    </div>
+                </div>
+
+                {{!-- Chat Room --}}
+                <div class="card-header bg-primary mb-3 text-white">
+                    Chat Room
+                    <span id="chatbox-username" class="pull-right float-right">
+                       {{#if user}}
+                            {{user.name}}
+                       {{/if}}
+                    </span>
+                </div>
+                <div class="card-body">
+
+                    <ul class="media-list" style="height: 100px; overflow-y: scroll" id="chatbox-listMessages">
+
+                    </ul>
+
+                </div>
+                <div class="card-footer">
+                    <div class="input-group">
+
+                        <input type="text" id="userMessage" class="form-control" placeholder="Enter message" />
+
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-primary btn-md"
+                                onclick="sendMessage()">SEND</button>
+                        </span>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+          </div>
+      </div>
+
+<input type="hidden" value="{{roomId}}" id="roomId">
+
+
+<link rel="stylesheet" href="/codemirror/lib/codemirror.css">
+<script src="/codemirror/lib/codemirror.js"></script>
+
+<link rel="stylesheet" href="/codemirror/theme/dracula.css">
+<link rel="stylesheet" href="/codemirror/theme/monokai.css">
+
+
+<script src="/codemirror/mode/xml/xml.js"></script>
+<script src="/codemirror/addon/edit/closetag.js"></script>
+<script src="/codemirror/addon/edit/matchbrackets.js"></script>
+<script src="/codemirror/addon/lint/lint.js"></script>
+<script src="/codemirror/addon/hint/javascript-hint.js"></script>
+<script src="/codemirror/keymap/sublime.js"></script>
+<script src="/codemirror/addon/fold/foldcode.js"></script>
+
+<script src="/plugins/ot/ot.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/peerjs@0.3.20/dist/peer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.0/jquery.min.js"></script>
+<script>
+
+    let EditorClient = ot.EditorClient;
+    let SocketIOAdapter = ot.SocketIOAdapter;
+    let CodeMirrorAdapter = ot.CodeMirrorAdapter;
+
+    let socket = io.connect('http://localhost:3000');
+
+    let editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
+        lineNumbers: true,
+        mode: "xml",
+        keyMap: "sublime",
+        styleActiveLine: true,
+        theme: "dracula",
+        autoCloseTags: true,
+        lineWrapping: true,
+        foldGutter: true,
+        tabMode: "indent",
+        dragDrop: true,
+        matchBrackets: true,
+        lint: true,
+        hint: true,
+        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-lint-markers"]
+    });
+
+
+
+
+    // codemirror live editor
+    let code = $('#editor').val();
+    let cmClient;
+    function init(str, revision, clients, serverAdapter) {
+        
+        if(!code) {
+            editor.setValue(str);
+        }
+     
+        cmClient = window.cmClient = new EditorClient(
+            revision, clients, serverAdapter, new CodeMirrorAdapter(editor)
+        );
+    }
+
+   socket.on('doc', function (obj) {
+        init(obj.str, obj.revision, obj.clients, new SocketIOAdapter(socket));
+    });
+
+
+
+ 
+
+    let username = $('#chatbox-username').val();
+
+    if(username === "" ){
+        let userId = Math.floor(Math.random() * 9999).toString();
+        username = "User" + userId;
+        $('#chatbox-username').text(username);
+    };
+
+    let userMessage = function (name, message) {
+        return ('<li class="media"> <div class="media-body" > ' +
+            '<p class="text-secondary">' + name + '</p> ' + '<div class="p-2 mb-1 bg-light text-secondary rounded">' + message +
+            '</div></div></li>'
+        );
+    };
+
+    let roomId = $('#roomId').val();
+    socket.emit('joinRoom', { room: roomId, username: username});
+
+    let sendMessage = function() {
+        let userMessage = $('#userMessage').val();
+
+        if(userMessage === '') return null;
+
+        socket.emit('chatMessage', {message: userMessage, username: username});
+
+        $('#userMessage').val("");
+    };
+
+    socket.on('chatMessage', function(data) {
+        $('#chatbox-listMessages').append(userMessage(data.username, data.message));
+    });
+
+
+
+    /* video chat */
+
+    // get the local video and display it with permission
+    function getLVideo(callback) {
+    navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+
+    let contraints = {
+        audio: true,
+        video: true
+    }
+
+    navigator.getUserMedia(contraints, callback.success, callback.error);
+
+    step2();
+    }
+
+    function recStream(stream, elemid) {
+        let video = document.getElementById(elemid);
+
+        video.srcObject = stream;
+
+        window.peer_stream = stream;
+    }
+
+    getLVideo({
+        success: function(stream) {
+            window.localstream = stream;
+            recStream(stream, 'lVideo');
+        },
+        error: function(err) {
+            alert("cannot access your camera");
+            console.log(err);
+        }
+    });
+
+    let conn;
+    let peer_id;
+
+    // create a peer connection with peer obj
+    let peer = new Peer( {key: 'lwjd5qra8257b9'});
+
+    // display the peer id on the DOM
+    peer.on('open', function(id) {
+        console.log(id);
+        peer.id = id;
+        document.getElementById("displayId").innerHTML = peer.id;
+    });
+
+    peer.on('connection', function(connection) {
+        conn = connection;
+        peer_id = connection.peer;
+
+        document.getElementById('connId').value = peer_id;
+    });
+
+    peer.on('error', function(err) {
+        alert("an error has happened" + err);
+        console.log(err);
+    });
+ 
+    // onclick with the connection butt = expose ice info
+    document.getElementById('conn_button').addEventListener('click', function() {
+        peer_id = document.getElementById("connId").value;
+
+        if(peer_id){
+            conn = peer.connect(peer_id);
+        }else{
+            alert("enter an id");
+            return false;
+        }
+
+    });
+
+    // call on click (offer and answer is exchange)
+    peer.on('call', function(call) {
+        let acceptCall = confirm("Do you want to answer this call");
+
+        if(acceptCall) {
+            call.answer(window.localstream);
+
+            call.on('stream', function(stream){
+                window.peer_stream = stream;
+
+                recStream(stream, 'rVideo');
+            });
+
+            call.on('close', function() {
+                alert('The call has ended');
+            });
+
+            step3(call);
+        }else{
+            console.log("call denied");
+        }
+    });
+
+    // ask to call
+    document.getElementById('call_button').addEventListener('click', function() {
+        console.log('calling a peer: ' + peer_id);
+        console.log(peer);
+
+        let call = peer.call(peer_id, window.localstream);
+
+        call.on('stream', function(stream) {
+            window.peer_stream = stream;
+
+            recStream(stream, 'rVideo');
+        });
+    });
+    // accept the call
+
+    // display the remote video and local cideo on the clients
+
+
+     // end call
+    $(function(){
+      $('#end-call').click(function(){
+        window.existingCall.close();
+        step2();
+      });
+    });
+
+    function step2 () {
+      $('#step1, #step3').hide();
+      $('#step2').show();
+    }
+
+    function step3 (call) {
+      window.existingCall = call;
+      $('#second-id').text(call.peer);
+      call.on('close', step2);
+      $('#step1, #step2').hide();
+      $('#step3').show();
+    }
+
+
+</script>
